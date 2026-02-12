@@ -1,0 +1,525 @@
+;É recomendado jogar com a frequencia em 70
+;e com o teclado numérico no modo "Pulse"
+RS equ P1.3
+EN equ P1.2
+;Define os pontos do jogador
+DET:
+	MOV B, #01H
+
+	LJMP MAIN
+
+MAIN:
+;Aqui o programa vai mandar
+;testar o valor de B e fara as perguntas
+	LCALL lcd_init
+	MOV A, #00H
+	LCALL posicionaCursor
+	CALL clearDisplay
+	LCALL PE1
+
+TESTE:
+;Aqui é verificado se B tem o
+;valor de 5 pontos para indicar a vitória
+	MOV A,B
+	CJNE A,#05,ADDB
+
+;Função para mostrar que o jogador erro
+;a pergunta 
+ERROU1:
+	DB "ERROU"
+	DB 00H
+
+;Função para diminuir a pontuação
+DECB:
+  	DEC B
+	CALL clearDisplay
+  	MOV DPTR,#ERROU1
+  	ACALL ESCR
+  	CALL MAIN
+
+;Função para indicar que o jogador acertou
+ACERT1:
+  	DB "ACERTOU"
+  	DB 00H
+
+ADDB:
+;Caso o jogador acerte, aumenta o
+;valor de B e volta para a main
+  	INC B
+	CALL clearDisplay
+  	MOV DPTR,#ACERT1
+  	ACALL ESCR
+  	CALL MAIN
+
+;Função que armazena os valores para verifica
+;se a resposta esta certa ou não e então confirmar
+PROXIMO1:
+	MOV R2, #00h
+	MOV R3, #00h
+	MOV DPTR, #RES1
+
+;Função que aguarda os valores do keypad
+;serem digitados e confirma o valor
+LOOP1:
+	CALL ScanKeyPad
+	SetB RS				 
+	Clr A
+	Mov A,R7
+	Call sendCharacter	
+	Clr A
+			
+	Movc A,@A+DPTR		
+	Call CheckInput	
+	Inc DPTR
+	Inc R2
+	Cjne R2,#04h,LOOP1
+	
+	Cjne R3,#04h,chamaPerd
+	CALL ADDB
+
+;mostra q o jogador perdeu
+chamaPerd:
+	CALL clearDisplay		
+	MOV A,#00H
+	Call posicionaCursor 	
+	SetB RS			
+	Call PERD2
+
+;perguntas
+PER1:
+  	DB "DESCOBR. BRASIL"
+  	DB 00H
+
+PE1:
+	MOV A,B
+  	CJNE A,#01,PE2
+  	MOV DPTR,#PER1
+	ACALL ESCR
+	MOV A, #40H
+	CALL posicionaCursor
+	ACALL PROXIMO1
+	ACALL clearDisplay
+  	LCALL TESTE
+	
+LOOP:
+	CALL ScanKeyPad
+	SetB RS				
+	Mov A,R7
+	Call sendCharacter		
+	Clr A
+			
+	Movc A,@A+DPTR	
+	Call CheckInput		
+	Inc DPTR
+	Inc R2
+	Cjne R2,#04h,LOOP
+	
+	Cjne R3,#04h,DECB2
+	CALL ADDB
+PROXIMO2:
+	MOV R2, #00h
+	MOV R3, #00h
+	MOV DPTR, #RES2
+	CALL LOOP
+
+PER2:
+  	DB "I. REV.FRANCESA"
+  	DB 00H
+
+PE2:
+  	MOV A, B
+	CJNE A,#02, PE3
+	MOV DPTR, #PER2
+	ACALL ESCR
+	MOV A, #40h
+	CALL posicionaCursor	
+	ACALL PROXIMO2
+	ACALL clearDisplay
+	LCALL TESTE
+
+DECB2:
+	LCALL DECB
+
+PROXIMO3:
+	MOV R2, #00h
+	MOV R3, #00h
+	MOV DPTR, #RES3
+	CALL LOOP
+
+PER3:
+	DB "FUND. FEI"
+  	DB 00H
+
+PE3:
+  	MOV A, B
+	CJNE A,#03, PE4
+	MOV DPTR, #PER3
+	ACALL ESCR
+	MOV A, #40h
+	CALL posicionaCursor	
+	ACALL PROXIMO3
+	ACALL clearDisplay
+	LCALL TESTE
+
+PROXIMO4:
+	MOV R2, #00h
+	MOV R3, #00h
+	MOV DPTR, #RES4
+	CALL LOOP
+
+PER4:
+  	DB "1a IDA ESPACO"
+  	DB 00H
+
+PE4:
+  	MOV A, B
+	CJNE A,#04, PE5
+	MOV DPTR, #PER4
+	ACALL ESCR
+	MOV A, #40h
+	CALL posicionaCursor	
+	ACALL PROXIMO4
+	ACALL clearDisplay
+	LCALL TESTE
+
+LOOP5:
+	CALL ScanKeyPad
+	SetB RS			
+	Clr A
+	Mov A,R7
+	Call sendCharacter			
+	Clr A
+			
+	Movc A,@A+DPTR	
+	Call CheckInput
+	Inc DPTR
+	Inc R2
+	Cjne R2,#04h,LOOP5
+	
+	Cjne R3,#04h,DECB2
+	CALL VIT2
+PROXIMO5:
+	MOV R2, #00h
+	MOV R3, #00h
+	MOV DPTR, #RES5
+	CALL LOOP5
+
+PER5:
+  	DB "FUND. McDonald"
+	DB 00H
+PE5:
+  	MOV A, B
+	CJNE A,#05, VOLTA
+	MOV DPTR, #PER5
+	ACALL ESCR
+	MOV A, #40h
+	CALL posicionaCursor	
+	ACALL PROXIMO5
+	ACALL clearDisplay
+	LCALL TESTE
+
+VOLTA:
+	ACALL PE1
+
+VIT1:
+  	DB "GANHOU"
+  	DB 00H
+
+VIT2:
+;Função para informar que o jogador
+;venceu com a frase "GANHOU"
+	CALL clearDisplay
+  	MOV DPTR,#VIT1
+  	ACALL ESCR
+  	CALL DET
+
+PERD1:
+  	DB "PERDEU"
+  	DB 00H
+
+PERD2:
+;Função para informar que o jogador
+;perdeu com a frase "PERDEU"
+  	MOV DPTR,#PERD1
+  	CALL ESCR
+	CALL DET
+
+ESCR:
+  	MOV R1, #00h
+	
+LP:
+  	MOV A, R1
+  	MOVC A,@A+DPTR
+  	JZ FNS
+  	ACALL sendCharacter
+  	INC R1
+  	MOV A, R1
+  	CALL LP
+
+FNS:
+  	RET
+
+;Inicia o Led
+lcd_init:
+  	CLR RS
+
+  	CLR P1.7
+  	CLR P1.6
+  	SETB P1.5
+  	CLR P1.4
+  	SETB EN
+  	CLR EN
+
+  	CALL delay
+
+  	SETB EN
+  	CLR EN
+
+  	SETB P1.7
+
+  	SETB EN
+  	CLR EN
+
+  	CALL delay
+
+  	CLR P1.7
+  	CLR P1.6
+  	CLR P1.5
+  	CLR P1.4
+
+  	SETB EN
+  	CLR EN
+
+  	SETB P1.6
+  	SETB P1.5
+
+  	SETB EN
+  	CLR EN
+
+  	CALL delay
+
+  	CLR P1.7
+  	CLR P1.6
+  	CLR P1.5
+  	CLR P1.4
+
+  	SETB EN
+  	CLR EN
+
+  	SETB P1.7
+  	SETB P1.6
+  	SETB P1.5
+  	SETB P1.4
+
+  	SETB EN
+  	CLR EN
+  	CALL delay
+  	RET
+
+sendCharacter:
+  	SETB RS
+  	MOV C, ACC.7
+  	MOV P1.7, C
+  	MOV C, ACC.6
+  	MOV P1.6, C
+  	MOV C, ACC.5
+  	MOV P1.5, C
+  	MOV C, ACC.4
+  	MOV P1.4, C
+
+  	SETB EN
+  	CLR EN
+
+  	MOV C, ACC.3
+  	MOV P1.7, C
+  	MOV C, ACC.2
+  	MOV P1.6, C
+  	MOV C, ACC.1
+  	MOV P1.5, C
+  	MOV C, ACC.0
+  	MOV P1.4, C
+
+  	SETB EN
+  	CLR EN
+
+  	CALL delay
+  	RET
+
+posicionaCursor:
+	CLR RS	
+	SETB P1.7		
+	MOV C, ACC.6	
+	MOV P1.6, C	
+	MOV C, ACC.5	
+	MOV P1.5, C	
+	MOV C, ACC.4	
+	MOV P1.4, C	
+
+	SETB EN			
+	CLR EN			
+
+	MOV C, ACC.3		
+	MOV P1.7, C		
+	MOV C, ACC.2		
+	MOV P1.6, C		
+	MOV C, ACC.1		
+	MOV P1.5, C	
+	MOV C, ACC.0	
+	MOV P1.4, C	
+
+	SETB EN			
+	CLR EN			
+
+	CALL delay			
+	CALL delay			
+	RET
+
+;LIMPA DISPLAY
+clearDisplay:
+	CLR RS	
+	CLR P1.7	
+	CLR P1.6	
+	CLR P1.5	
+	CLR P1.4	
+
+	SETB EN		
+	CLR EN		
+
+	CLR P1.7	
+	CLR P1.6	
+	CLR P1.5	
+	SETB P1.4		
+
+	SETB EN		
+	CLR EN		
+
+	MOV R6, #40
+	rotC:
+	CALL delay		
+	DJNZ R6, rotC
+	RET
+
+delay:
+  	MOV R0, #50
+  	DJNZ R0, $
+  	RET
+
+CheckInput:	
+	Cjne A,07H,Exit	
+	Inc R3
+Exit:					
+	Ret
+
+ScanKeyPad:
+	CLR P0.3	
+	CALL IDCode0	
+	SetB P0.3		
+	JB F0,Done  	 				
+	CLR P0.2		
+	CALL IDCode1		
+	SetB P0.2			
+	JB F0,Done		 	
+	;Scan Row1
+	CLR P0.1		
+	CALL IDCode2		
+	SetB P0.1			
+	JB F0,Done		
+
+	;Scan Row0			
+	CLR P0.0			
+	CALL IDCode3	
+	SetB P0.0			
+	JB F0,Done		 
+														
+	JMP ScanKeyPad		
+							
+Done:
+	Clr F0		      
+	Ret
+
+IDCode0:
+	JNB P0.4, KeyCode03	
+	JNB P0.5, KeyCode13	
+	JNB P0.6, KeyCode23	
+	RET					
+
+KeyCode03:
+	SETB F0			
+	Mov R7,#'3'		
+	RET				
+
+KeyCode13:
+	SETB F0			
+	Mov R7,#'2'	
+	RET				
+
+KeyCode23:
+	SETB F0			
+	Mov R7,#'1'		
+	RET				
+
+IDCode1:
+	JNB P0.4, KeyCode02	
+	JNB P0.5, KeyCode12	
+	JNB P0.6, KeyCode22	
+	RET					
+
+KeyCode02:	
+	SETB F0	
+	Mov R7,#'6'
+	RET				
+
+KeyCode12:
+	SETB F0			
+	Mov R7,#'5'
+	RET				
+
+KeyCode22:
+	SETB F0			
+	Mov R7,#'4'
+	RET				
+
+IDCode2:
+	JNB P0.4, KeyCode01
+	JNB P0.5, KeyCode11
+	JNB P0.6, KeyCode21
+	RET					
+
+KeyCode01:
+	SETB F0			
+	Mov R7,#'9'
+	RET				
+
+KeyCode11:
+	SETB F0	
+	Mov R7,#'8'
+	RET				
+
+KeyCode21:	
+	SETB F0		
+	Mov R7,#'7'	
+	RET				
+
+IDCode3:
+	JNB P0.5, KeyCode10	
+	RET								
+
+KeyCode10:	
+	SETB F0			
+	Mov R7,#'0'		
+	RET									
+
+;Respostas
+RES1:
+	DB '1','5','0','0',0
+
+RES2:
+	DB '1','7','8','9',0
+
+RES3:
+	DB '1','9','4','1',0
+RES4:
+	DB '1','9','6','1',0
+
+RES5:
+	DB '1','9','4','0',0
